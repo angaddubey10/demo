@@ -12,6 +12,7 @@ import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.sql.*;
 
 public class MyDictionary extends Application {
 
@@ -20,10 +21,14 @@ public class MyDictionary extends Application {
     int yLine = 20;
     int yline2 = 50;
 
+    DictionaryUsingHashMap dictionary;
+
     private Pane createContent(){
         Pane root = new Pane();
         root.setPrefSize(400,300);
         root.getChildren().addAll(tileGroup);
+
+        dictionary = new DictionaryUsingHashMap();
 
         TextField wordText = new TextField("Angad");
         wordText.setTranslateX(xLine);
@@ -32,6 +37,7 @@ public class MyDictionary extends Application {
         Label meaningLabel = new Label("I am meaning");
         meaningLabel.setTranslateX(xLine);
         meaningLabel.setTranslateY(yline2);
+
 
         Button searchButton = new Button("Search");
         searchButton.setTranslateX(xLine+200);
@@ -44,28 +50,42 @@ public class MyDictionary extends Application {
                     meaningLabel.setText("Please enter a wod");
                 }
                 else{
-                    meaningLabel.setText("meaning ");
+                    meaningLabel.setText(dictionary.findMeaning(word));
                 }
-            }
-        });
-
-        searchButton.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent actionEvent) {
 
             }
         });
-
-
 
 
         tileGroup.getChildren().addAll(wordText, searchButton, meaningLabel);
         return  root;
     }
 
+    public void connectToDatabase(){
+        final String DB_URL = "jdbc:mysql://localhost:3306/my_dict";
+        final String USER = "root";
+        final String PASS = "angad123";
+
+        System.out.println("Connecting to database");
+        String newId = "select * from word_list";
+        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(newId);
+        ) {
+            while (rs.next()) {
+                //Display values
+                System.out.println(rs.getInt("id") + rs.getString("word") + rs.getString("meaning")); //rs.getInt("rollno");
+            }
+            rs.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public void start(Stage stage) throws IOException {
 //        FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("hello-view.fxml"));
+        connectToDatabase();
         Scene scene = new Scene(createContent());
         stage.setTitle("My Dictionary");
         stage.setScene(scene);
